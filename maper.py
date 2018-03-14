@@ -36,6 +36,10 @@ class maper(object):
             self.inputs['-i'].append(osp.splitext(filename)[0] + '.shp')
         return self
 
+    def convert_and_clip(self, filename):
+        """docstring."""
+        pass
+
     def info(self):
         """docstring."""
         return self
