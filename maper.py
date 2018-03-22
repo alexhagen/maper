@@ -23,19 +23,24 @@ class maper(object):
         if not osp.exists(maper_metadata_path):
             os.mkdir(maper_metadata_path)
 
-    def i(self, filename, name=None, proj=True, suffix=''):
+    def i(self, filename, name=None, proj=True, simplify=False, xl=False):
         """docstring."""
         if name is None:
             name = osp.splitext(filename)[0].split('/')[-1]
         if proj:
             if not osp.isfile(osp.splitext(filename)[0] + '_temp.shp'):
-                cmd = self.command
+                if xl:
+                    cmd = 'mapshaper-xl'
+                else:
+                    cmd = self.command
                 cmd += ' -i {0}'.format(filename)
-                cmd += ' -proj wgs84'
+                cmd += ' -proj wgs84 -drop target=* fields=*'
+                if simplify:
+                    cmd += ' -simplify dp stats resolution=720x680'
                 cmd += ' -o {0}_temp.shp'.format(osp.splitext(filename)[0])
                 print cmd
                 self.cmd(cmd)
-            self.inputs['-i'].append(osp.splitext(filename)[0] + '_temp.shp' + suffix)
+            self.inputs['-i'].append(osp.splitext(filename)[0] + '_temp.shp')
         else:
             self.inputs['-i'].append(osp.splitext(filename)[0] + '.shp' + suffix)
         self.names.extend([name])
@@ -64,7 +69,7 @@ class maper(object):
 
     def clip(self):
         cmd = self.command
-        cmd += ' -rectangle name=box bbox=-130,35,-110,55'
+        cmd += ' -rectangle name=box bbox=-127,44,-115,51'
         cmd += ' -proj +proj=merc +lat_ts=46.289428 +lon_0=-119.291794'
         cmd += ' -o box_temp.shp'
         print cmd
@@ -72,7 +77,7 @@ class maper(object):
 
     def export(self):
         """export."""
-        output = {'-o': 'format=svg width=720 {0}.svg'.format(self.filename)}
+        output = {'-o': 'target=* format=svg width=720 {0}.svg'.format(self.filename)}
         arg = self.command
         for key, val in self.inputs.items():
             arg += ' {0} combine-files'.format(key)
@@ -81,26 +86,34 @@ class maper(object):
         arg += ' -rename-layers {0}'.format(self.names[0])
         for name in self.names[1:]:
             arg += ',{0}'.format(name)
+        arg += ' -proj +proj=merc +lat_ts=46.289428 +lon_0=-119.291794'
+        arg += ' -clip box_temp.shp'
+
+        #arg += ' -o target=* %s.topojson' % self.filename
+        #print arg
+        #self.cmd(arg)
+        #arg = self.command + ' -i %s.topojson' % self.filename
         try:
             arg += ' -svg-style'
             for key, val in self.styledict.items():
                 arg += ' {0}={1}'.format(key, val)
         except AttributeError:
             pass
-        arg += ' -drop target=* fields=*'
+        #arg += ' -drop target=* fields=*'
         for name, _dict in self.styledicts.items():
             arg += ' -svg-style target=%s' % name
             for key, val in _dict.items():
                 arg += ' {0}={1}'.format(key, val)
-        arg += ' -merge-layers'
-        arg += ' -proj +proj=merc +lat_ts=46.289428 +lon_0=-119.291794'
-        arg += ' -clip box_temp.shp'
+        #arg += ' -merge-layers'
         for key, val in self.arglist.items():
             arg += ' {0} {1}'.format(key, val)
         for key, val in output.items():
             arg += ' {0} {1}'.format(key, val)
         print arg
         self.cmd(arg)
+        #arg = 'mapshaper output.topojson -info'
+        #print arg
+        #self.cmd(arg)
         return self
 
     def show(self):
