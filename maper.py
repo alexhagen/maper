@@ -16,24 +16,30 @@ class maper(object):
         self.arglist = defaultdict()
         self.inputs = defaultdict()
         self.inputs['-i'] = []
+        self.styledicts = {}
+        self.names = []
         # check if .maper exists
         maper_metadata_path = osp.join(osp.expanduser('~'), '.maper')
         if not osp.exists(maper_metadata_path):
             os.mkdir(maper_metadata_path)
 
-    def i(self, filename, name=None, proj=False):
+    def i(self, filename, name=None, proj=True, suffix=''):
         """docstring."""
-
+        if name is None:
+            name = osp.splitext(filename)[0].split('/')[-1]
         if proj:
-            cmd = self.command
-            cmd += ' -i {0}'.format(filename)
-            cmd += ' -proj wgs84'
-            cmd += ' -o {0}_temp.shp'.format(osp.splitext(filename)[0])
-            print cmd
-            self.cmd(cmd)
-            self.inputs['-i'].append(osp.splitext(filename)[0] + '_temp.shp')
+            if not osp.isfile(osp.splitext(filename)[0] + '_temp.shp'):
+                cmd = self.command
+                cmd += ' -i {0}'.format(filename)
+                cmd += ' -proj wgs84'
+                cmd += ' -o {0}_temp.shp'.format(osp.splitext(filename)[0])
+                print cmd
+                self.cmd(cmd)
+            self.inputs['-i'].append(osp.splitext(filename)[0] + '_temp.shp' + suffix)
         else:
-            self.inputs['-i'].append(osp.splitext(filename)[0] + '.shp')
+            self.inputs['-i'].append(osp.splitext(filename)[0] + '.shp' + suffix)
+        self.names.extend([name])
+
         return self
 
     def convert_and_clip(self, filename):
@@ -44,8 +50,11 @@ class maper(object):
         """docstring."""
         return self
 
-    def style(self, **kwargs):
-        self.styledict = kwargs
+    def style(self, name=None, **kwargs):
+        if name is None:
+            self.styledict = kwargs
+        else:
+            self.styledicts[name] = kwargs
         return self
 
     def simplify(self, perc, method='dp'):
@@ -69,9 +78,21 @@ class maper(object):
             arg += ' {0} combine-files'.format(key)
             for item in val:
                 arg += ' {1}'.format(key, item)
-        arg += ' -svg-style'
-        for key, val in self.styledict.items():
-            arg += ' {0}={1}'.format(key, val)
+        arg += ' -rename-layers {0}'.format(self.names[0])
+        for name in self.names[1:]:
+            arg += ',{0}'.format(name)
+        try:
+            arg += ' -svg-style'
+            for key, val in self.styledict.items():
+                arg += ' {0}={1}'.format(key, val)
+        except AttributeError:
+            pass
+        arg += ' -drop target=* fields=*'
+        for name, _dict in self.styledicts.items():
+            arg += ' -svg-style target=%s' % name
+            for key, val in _dict.items():
+                arg += ' {0}={1}'.format(key, val)
+        arg += ' -merge-layers'
         arg += ' -proj +proj=merc +lat_ts=46.289428 +lon_0=-119.291794'
         arg += ' -clip box_temp.shp'
         for key, val in self.arglist.items():
