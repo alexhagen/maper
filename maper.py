@@ -23,7 +23,8 @@ class maper(object):
         if not osp.exists(maper_metadata_path):
             os.mkdir(maper_metadata_path)
 
-    def i(self, filename, name=None, proj=True, simplify=False, xl=False):
+    def i(self, filename, name=None, proj=True, simplify=False, xl=False,
+          filter=None):
         """docstring."""
         if name is None:
             name = osp.splitext(filename)[0].split('/')[-1]
@@ -34,6 +35,8 @@ class maper(object):
                 else:
                     cmd = self.command
                 cmd += ' -i {0}'.format(filename)
+                if filter is not None:
+                    cmd += ' -filter \'%s\'' % filter
                 cmd += ' -proj wgs84 -drop target=* fields=*'
                 if simplify:
                     cmd += ' -simplify dp stats resolution=720x680'
