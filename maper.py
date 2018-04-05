@@ -70,9 +70,10 @@ class maper(object):
         self.arglist.update({'-simplify': 'dp stats resolution=720x680'})
         return self
 
-    def clip(self):
+    def clip(self, lon1, lat1, lon2, lat2):
+        """docstring."""
         cmd = self.command
-        cmd += ' -rectangle name=box bbox=-127,43,-115,51'
+        cmd += ' -rectangle name=box bbox=%.5f,%.5f,%.5f,%.5f' % (lon1, lat1, lon2, lat2)
         cmd += ' -proj +proj=merc +lat_ts=46.289428 +lon_0=-119.291794'
         cmd += ' -o box_temp.shp'
         print cmd
