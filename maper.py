@@ -72,7 +72,7 @@ class maper(object):
 
     def clip(self):
         cmd = self.command
-        cmd += ' -rectangle name=box bbox=-127,44,-115,51'
+        cmd += ' -rectangle name=box bbox=-127,43,-115,51'
         cmd += ' -proj +proj=merc +lat_ts=46.289428 +lon_0=-119.291794'
         cmd += ' -o box_temp.shp'
         print cmd
