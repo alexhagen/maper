@@ -1,8 +1,11 @@
 """Maper - a simple ``Python`` wrapper for ``mapshaper``."""
+from __future__ import print_function
 import os.path as osp
 import subprocess
 import shutil
 import os
+import sys
+sys.path.insert(0, '/Users/ahagen/code/pyg')
 from pyg import twod as pyg
 from collections import defaultdict
 
@@ -41,7 +44,7 @@ class maper(object):
                 if simplify:
                     cmd += ' -simplify dp stats resolution=720x680'
                 cmd += ' -o {0}_temp.shp'.format(osp.splitext(filename)[0])
-                print cmd
+                print (cmd)
                 self.cmd(cmd)
             self.inputs['-i'].append(osp.splitext(filename)[0] + '_temp.shp')
         else:
@@ -76,7 +79,7 @@ class maper(object):
         cmd += ' -rectangle name=box bbox=%.5f,%.5f,%.5f,%.5f' % (lon1, lat1, lon2, lat2)
         cmd += ' -proj +proj=merc +lat_ts=46.289428 +lon_0=-119.291794'
         cmd += ' -o box_temp.shp'
-        print cmd
+        print (cmd)
         self.cmd(cmd)
 
     def export(self):
@@ -113,7 +116,7 @@ class maper(object):
             arg += ' {0} {1}'.format(key, val)
         for key, val in output.items():
             arg += ' {0} {1}'.format(key, val)
-        print arg
+        print (arg)
         self.cmd(arg)
         #arg = 'mapshaper output.topojson -info'
         #print arg
@@ -134,5 +137,5 @@ class maper(object):
         if blocking:
             (out, err) = p.communicate()
             if len(err) > 0:
-                print err
+                print (err)
             return out
